@@ -56,18 +56,21 @@
  */
 
 #include <inttypes.h>
+
+#include <stdio.h>
 #include <avr/io.h>
 #include <avr/wdt.h>
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
-#include <avr/sleep.h> 
+#include <avr/sleep.h>
+#include <util/delay.h>
 #include "clock.h"
 #include "isp.h"
 #include "counter.h"
 #include "hal.h"
 #include "script.h"
 #include "debounce.h"
-
+#include <stdint.h>
 
 //states
 #define S_INIT 0
@@ -89,8 +92,7 @@
 int main(void) {
 
     hal_init();
-	hal_enableINT0();
-	hal_enableINT1();
+
     clock_init();
 	set_sleep_mode(SLEEP_MODE_PWR_DOWN);
 	
@@ -122,8 +124,8 @@ int main(void) {
 		}
 		
 		//fast ticks
-		if (clock_getTickerSlowDiff(ticker10MS) > CLOCK_TICKER_FAST_10MS) {
-            ticker10MS = clock_getTickerSlow();
+		if (clock_getTickerFastDiff(ticker10MS) > CLOCK_TICKER_FAST_10MS) {
+            ticker10MS = clock_getTickerFast();
 			
 			
 			tickDebounce();
@@ -146,11 +148,6 @@ int main(void) {
 				hal_setLEDred(0);
 				hal_setBuzzer(0);
 				
-				
-				//check whether there is a valid program or just the dummy
-				/*if(scriptdata[0]==SCRIPT_CMD_END) { //TODO
-					state=S_NO_PROGRAM;
-				} */
 				
 				
 				break;
@@ -201,10 +198,16 @@ int main(void) {
 			case S_INIT:
 			case S_WAKEUP:
 				
+				//check whether there is a valid program or just the dummy
+				/*if(scriptdata[0]==SCRIPT_CMD_END) { //TODO
+					state=S_NO_PROGRAM;
+				} */
+				
 				//remaining cycles to program?
 				if(counter_read()==0) {
 					state=S_NO_MORE;
 				}
+				
 				
 				
 				state=S_IDLE;
@@ -213,8 +216,9 @@ int main(void) {
 			case S_IDLE:
 				
 				
-				if( get_key_press( (1 << IO_SWITCH ) | (1 << IO_EXT_SWITCH) ) ) {
+				if( get_key_press(1 << IO_SWITCH ) || get_key_press(1 << IO_EXT_SWITCH) ) {
 					sleeptimer=clock_getTickerSlow();
+					
 					if(counter_read()>0) {
 						state=S_PROGRAMMING;
 					} else {
@@ -224,17 +228,20 @@ int main(void) {
 				
 				//go to sleep?
 				cli();	//for atomic check of condition
-				if (clock_getTickerSlowDiff(sleeptimer) < CLOCK_TICKER_SLOW_8S) {
-					sei();
-				} else { 
+				if (clock_getTickerSlowDiff(sleeptimer) > CLOCK_TICKER_SLOW_8S) {
 					state=S_SLEEP; 	//turning on interrupts to wake up again is taken care of in S_SLEEP
+				} else { 
+					sei();
 				}
 				
 				
 				break;
 			case S_PROGRAMMING:
 				
-				success = script_run();
+				//dummy for debugging purpose
+				_delay_ms(2000);
+				
+				success = 0; /*script_run();*/
 				
 				if(success) {
 					state=S_PROGRAMMING_SUCCESS;
@@ -264,6 +271,10 @@ int main(void) {
 				
 			case S_SLEEP:
 				
+				//enable interrupts for wakeup
+				hal_enableINT0();
+				hal_enableINT1();
+				
 				sleep_enable();
 				sleep_bod_disable();
 				sei();
@@ -285,9 +296,9 @@ int main(void) {
 
 
 ISR(INT1_vect) {
-	//dummy
+	hal_disableINT1();		//disable interrupt, since its a level interrupt, fired as long as switch is hold.
 }
 
 ISR(INT0_vect) {
-	//dummy
+	hal_disableINT0();		//disable interrupt, since its a level interrupt, fired as long as switch is hold.
 }
