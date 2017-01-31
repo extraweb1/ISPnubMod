@@ -66,6 +66,20 @@
 #include "counter.h"
 #include "hal.h"
 #include "script.h"
+#include "debounce.h"
+
+
+//states
+#define S_INIT 0
+#define S_IDLE 10
+#define S_PROGRAMMING 20
+#define S_PROGRAMMING_SUCCESS 21
+#define S_PROGRAMMING_FAILED 22
+#define S_SLEEP 30
+#define S_WAKEUP 31
+#define S_NO_MORE 40	//counter empty
+#define S_NO_PROGRAM 41
+
 
 
 /**
@@ -78,98 +92,191 @@ int main(void) {
 	hal_enableINT0();
 	hal_enableINT1();
     clock_init();
+	set_sleep_mode(SLEEP_MODE_PWR_DOWN);
 	
 	
+    uint8_t ticker10MS = clock_getTickerFast();
+    uint8_t ticker250MS = clock_getTickerSlow();
+	uint8_t sleeptimer = clock_getTickerSlow();
 	
-	hal_setLEDgreen(1);
-	hal_setLEDred(0);
-	hal_setBuzzer(0);
+    uint8_t success = 1;
+    
+	uint8_t buzzer = 0;		//time to turn on in multiple by 10ms
+	uint8_t toggle = 0;
 	
-
+	uint8_t state = S_INIT;
+	
     // enable interrupts
     sei();
-
-    uint8_t ticker = clock_getTickerSlow();
-    uint8_t toggle = 0;
-    uint16_t counter = counter_read();
-    uint8_t success = 1;
-    uint8_t keyticker = clock_getTickerSlow();
-    uint8_t keylocked = 1;
-
-
+	
+	
     // main loop	
     while (1) {
-
-        if (keylocked) {
-
-            // do debouncing
-            
-            if (hal_getSwitch()) {
-                keyticker = clock_getTickerSlow();
-            } else if (clock_getTickerSlowDiff(keyticker) > CLOCK_TICKER_SLOW_500MS) {
-                keylocked = 0;
-            }
-
-        } else if (hal_getSwitch()) {
-
-            // key pressed
-            
-            if (counter > 0) {
-                hal_setLEDgreen(1);
-                hal_setLEDred(1);
-
-                success = script_run();
-                counter = counter_read();
-
-                hal_setLEDgreen(success);
-                hal_setLEDred(0);
-
-                ticker = clock_getTickerSlow();
-            } else {
-                success = 0;
-            }
-            
-            keylocked = 1;
-            keyticker = clock_getTickerSlow();
-
-        }
-
-        // do signaling
-        if (clock_getTickerSlowDiff(ticker) > CLOCK_TICKER_SLOW_250MS) {
-            ticker = clock_getTickerSlow();
+		
+		
+		//slow ticks
+		if (clock_getTickerSlowDiff(ticker250MS) > CLOCK_TICKER_SLOW_250MS) {
+            ticker250MS = clock_getTickerSlow();
+			
             toggle = !toggle;
-
-            if (counter == 0) {
-				hal_setLEDgreen(toggle);
-            } else {
-				hal_setLEDgreen(success);
-			}
-
-            if (!success) {
-				hal_setLEDred(toggle);
-			} else {
-				hal_setLEDred(0);
-			}
-
-        }
-		
-		
-		set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-		cli();	//for atomic check of condition
-		if (clock_getTickerSlowDiff(keyticker) > CLOCK_TICKER_SLOW_8S) {
-			sleep_enable();
-			sleep_bod_disable();
-			hal_setLEDgreen(0);
-			hal_setLEDred(0);
-			sei();
-			sleep_cpu();
-			
-			//execution is resumed here after processing interrupt
-			
-			hal_setLEDgreen(1);
-			sleep_disable();
 		}
-		sei();
+		
+		//fast ticks
+		if (clock_getTickerSlowDiff(ticker10MS) > CLOCK_TICKER_FAST_10MS) {
+            ticker10MS = clock_getTickerSlow();
+			
+			
+			tickDebounce();
+			
+			if(buzzer!=0)
+				buzzer--;
+		}
+		
+		//buzzer
+		if (buzzer==0) {
+			hal_setBuzzer(0);
+		} else {
+			hal_setBuzzer(1);
+		}
+		//led signaling
+		switch(state) {
+			case S_INIT:
+			case S_WAKEUP:
+				hal_setLEDgreen(1);
+				hal_setLEDred(0);
+				hal_setBuzzer(0);
+				
+				
+				//check whether there is a valid program or just the dummy
+				if(scriptdata[0]==SCRIPT_CMD_END) {
+					state=S_NO_PROGRAM;
+				}
+				
+				
+				break;
+				
+			case S_IDLE:
+				if(success) {
+					hal_setLEDgreen(1);
+					hal_setLEDred(0);
+				} else {
+					hal_setLEDgreen(0);
+					hal_setLEDred(toggle);
+				}
+				break;
+			
+			case S_PROGRAMMING:
+				hal_setLEDgreen(1);
+				hal_setLEDred(1);
+				
+				break;
+			case S_PROGRAMMING_SUCCESS:
+
+				break;
+			case S_PROGRAMMING_FAILED:
+				
+				break;
+			case S_NO_MORE:
+				hal_setLEDgreen(toggle);
+				hal_setLEDred(toggle);
+				
+				break;
+				
+			case S_NO_PROGRAM:
+				hal_setLEDgreen(!toggle);
+				hal_setLEDred(toggle);
+				
+				break;
+			case S_SLEEP:
+				hal_setLEDgreen(0);
+				hal_setLEDred(0);
+				hal_setBuzzer(0);
+				break;
+		}
+		
+		
+		
+		//processing
+		switch(state) {
+			case S_INIT:
+			case S_WAKEUP:
+				
+				//remaining cycles to program?
+				if(counter_read()==0) {
+					state=S_NO_MORE;
+				}
+				
+				
+				state=S_IDLE;
+				break;
+			
+			case S_IDLE:
+				
+				
+				if( get_key_press( (1 << IO_SWITCH ) | (1 << IO_EXT_SWITCH) ) ) {
+					sleeptimer=clock_getTickerSlow();
+					if(counter_read()>0) {
+						state=S_PROGRAMMING;
+					} else {
+						state=S_NO_MORE;
+					}
+				}
+				
+				//go to sleep?
+				cli();	//for atomic check of condition
+				if (clock_getTickerSlowDiff(sleeptimer) < CLOCK_TICKER_SLOW_8S) {
+					sei();
+				} else { 
+					state=S_GOTO_SLEEP; 	//turning on interrupts to wake up again is taken care of in S_SLEEP
+				}
+				
+				
+				break;
+			case S_PROGRAMMING:
+				
+				success = script_run();
+				
+				if(success) {
+					state=S_PROGRAMMING_SUCCESS;
+				} else {
+					state=S_PROGRAMMING_FAILED;
+				}
+				break;
+			case S_PROGRAMMING_SUCCESS:
+				
+				buzzer=10;
+				
+				state=S_IDLE;
+				
+				break;
+			case S_PROGRAMMING_FAILED:
+				
+				buzzer=50;
+				
+				state=S_IDLE;
+				
+				break;
+			case S_NO_MORE:
+			case S_NO_PROGRAM:
+				//nothing to do any more...
+				
+				break;
+				
+			case S_SLEEP:
+				
+				sleep_enable();
+				sleep_bod_disable();
+				sei();
+				sleep_cpu();
+				
+				//execution is resumed here after processing interrupt
+				
+				sleep_disable();
+				state=S_WAKEUP;
+				
+				
+				break;
+		}
 		
     }
 
