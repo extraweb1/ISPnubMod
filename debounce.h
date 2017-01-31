@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include "hal.h"
 
 #define KEY_PIN         IO_SWITCH_PIN
 
@@ -24,4 +25,11 @@ volatile uint8_t key_state;                                // debounced and inve
 volatile uint8_t key_press;                                // key press detect
  
 volatile uint8_t key_rpt;                                  // key long press and repeat
- 
+
+
+void tickDebounce(void);
+uint8_t get_key_press( uint8_t key_mask );
+uint8_t get_key_rpt( uint8_t key_mask );
+uint8_t get_key_state( uint8_t key_mask );
+uint8_t get_key_short( uint8_t key_mask );
+uint8_t get_key_long( uint8_t key_mask );

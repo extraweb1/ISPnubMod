@@ -148,9 +148,9 @@ int main(void) {
 				
 				
 				//check whether there is a valid program or just the dummy
-				if(scriptdata[0]==SCRIPT_CMD_END) {
+				/*if(scriptdata[0]==SCRIPT_CMD_END) { //TODO
 					state=S_NO_PROGRAM;
-				}
+				} */
 				
 				
 				break;
@@ -227,7 +227,7 @@ int main(void) {
 				if (clock_getTickerSlowDiff(sleeptimer) < CLOCK_TICKER_SLOW_8S) {
 					sei();
 				} else { 
-					state=S_GOTO_SLEEP; 	//turning on interrupts to wake up again is taken care of in S_SLEEP
+					state=S_SLEEP; 	//turning on interrupts to wake up again is taken care of in S_SLEEP
 				}
 				
 				

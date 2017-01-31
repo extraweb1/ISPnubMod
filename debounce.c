@@ -1,6 +1,6 @@
 #include "debounce.h"
 
-tickDebounce() {                            // every 10ms
+void tickDebounce(void) {                            // every 10ms
   static uint8_t ct0 = 0xFF, ct1 = 0xFF, rpt;
   uint8_t i;
  
