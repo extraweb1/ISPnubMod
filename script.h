@@ -38,6 +38,7 @@
 #define SCRIPT_CMD_DECCOUNTER   0x07    ///< Command: Decrement programming counter
 #define SCRIPT_CMD_EEPROM       0x08    ///< Command: Write eeprom data block
 #define SCRIPT_CMD_END          0xff    ///< Command: End of script
+#define SCRIPT_CMD_NOPROGRAM    0xf0    ///< Dummy-Command: Used to determine whether ISPnub Creator was used to replace dummy by program
 
 uint8_t script_run();
 

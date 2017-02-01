@@ -55,8 +55,8 @@
  * 
  */
 
+#include "hal.h"
 #include <inttypes.h>
-
 #include <stdio.h>
 #include <avr/io.h>
 #include <avr/wdt.h>
@@ -67,7 +67,6 @@
 #include "clock.h"
 #include "isp.h"
 #include "counter.h"
-#include "hal.h"
 #include "script.h"
 #include "debounce.h"
 #include <stdint.h>
@@ -104,13 +103,13 @@ int main(void) {
     uint8_t success = 1;
     
 	uint8_t buzzer = 0;		//time to turn on in multiple by 10ms
-	uint8_t toggle = 0;
+	uint8_t toggle250MS = 0;
+	uint8_t toggle10MS = 0;
 	
 	uint8_t state = S_INIT;
 	
     // enable interrupts
     sei();
-	
 	
     // main loop	
     while (1) {
@@ -120,14 +119,15 @@ int main(void) {
 		if (clock_getTickerSlowDiff(ticker250MS) > CLOCK_TICKER_SLOW_250MS) {
             ticker250MS = clock_getTickerSlow();
 			
-            toggle = !toggle;
+            toggle250MS = !toggle250MS;
 		}
 		
 		//fast ticks
 		if (clock_getTickerFastDiff(ticker10MS) > CLOCK_TICKER_FAST_10MS) {
             ticker10MS = clock_getTickerFast();
 			
-			
+			toggle10MS = !toggle10MS;
+			 
 			tickDebounce();
 			
 			if(buzzer!=0)
@@ -153,12 +153,12 @@ int main(void) {
 				break;
 				
 			case S_IDLE:
-				if(success) {
+				if(success==1) {
 					hal_setLEDgreen(1);
 					hal_setLEDred(0);
 				} else {
 					hal_setLEDgreen(0);
-					hal_setLEDred(toggle);
+					hal_setLEDred(toggle250MS);
 				}
 				break;
 			
@@ -174,14 +174,14 @@ int main(void) {
 				
 				break;
 			case S_NO_MORE:
-				hal_setLEDgreen(toggle);
-				hal_setLEDred(toggle);
+				hal_setLEDgreen(toggle250MS);
+				hal_setLEDred(toggle250MS);
 				
 				break;
 				
 			case S_NO_PROGRAM:
-				hal_setLEDgreen(!toggle);
-				hal_setLEDred(toggle);
+				hal_setLEDgreen(!toggle250MS);
+				hal_setLEDred(toggle250MS);
 				
 				break;
 			case S_SLEEP:
@@ -197,17 +197,11 @@ int main(void) {
 		switch(state) {
 			case S_INIT:
 			case S_WAKEUP:
-				
-				//check whether there is a valid program or just the dummy
-				/*if(scriptdata[0]==SCRIPT_CMD_END) { //TODO
-					state=S_NO_PROGRAM;
-				} */
-				
+
 				//remaining cycles to program?
 				if(counter_read()==0) {
 					state=S_NO_MORE;
 				}
-				
 				
 				
 				state=S_IDLE;
@@ -238,15 +232,14 @@ int main(void) {
 				break;
 			case S_PROGRAMMING:
 				
-				//dummy for debugging purpose
-				_delay_ms(2000);
+				success = script_run();
 				
-				success = 0; /*script_run();*/
-				
-				if(success) {
+				if(success==1) {
 					state=S_PROGRAMMING_SUCCESS;
-				} else {
+				} else if(success==0) {
 					state=S_PROGRAMMING_FAILED;
+				} else {
+					state=S_NO_PROGRAM;
 				}
 				break;
 			case S_PROGRAMMING_SUCCESS:
@@ -266,7 +259,7 @@ int main(void) {
 			case S_NO_MORE:
 			case S_NO_PROGRAM:
 				//nothing to do any more...
-				
+
 				break;
 				
 			case S_SLEEP:

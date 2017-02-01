@@ -34,10 +34,11 @@
 /**
  * @brief Pointer to script data in flash memory
  */
-unsigned char scriptdata[] SCRIPT_SECTION = {SCRIPT_CMD_END}; // dummy (is overwritten by hex creator)
+unsigned char scriptdata[] SCRIPT_SECTION = {SCRIPT_CMD_NOPROGRAM}; // dummy (is overwritten by hex creator)
 
 /**
  * @brief Execute script stored in flash memory
+ * @retval 2 No Program (use ISPnubCreator to generate hex to flash targets)
  * @retval 1 Everything okay
  * @retval 0 Error occured
  */
@@ -79,6 +80,7 @@ uint8_t script_run() {
                     data[i] = flash_readbyte(scriptdata_p++);
                 isp_transmit(data, sizeof (data));
                 success = 1;
+
             }
                 break;
 
@@ -137,11 +139,18 @@ uint8_t script_run() {
             }
                 break;
 
-            case SCRIPT_CMD_END:
-                return 1;
-                break;
-        }
+			case SCRIPT_CMD_NOPROGRAM:
+				return 2;
+				break;
 
+			case SCRIPT_CMD_END:
+				return 1;
+				break;
+
+        }
+		
+		
+		
         if (!success) {
             isp_disconnect();
             return 0;
