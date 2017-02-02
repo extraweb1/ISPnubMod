@@ -22,11 +22,10 @@
  *   - Code cleanup and documentation
  * - v1.2 (2014-04-08)
  *   - Added EEPROM programming
- * - v1.3 (2017-01-29)
- *   - Improvements for Battery-Powered Devices (TODO)
- *   - State-Machine in Main (TODO)
+ * - v1.4 (2017-01-29)
+ *   - Improvements for Battery-Powered Devices
  *   - Buzzer on PBxxx (TODO)
- *   - made slowticker volatile
+ *   - Fix: Made slowticker volatile
  *   - 
  *
  */
@@ -84,6 +83,17 @@
 
 
 
+void checkGoToSleep(void) {
+	//go to sleep?
+	cli();	//for atomic check of condition
+	if (clock_getTickerSlowDiff(sleeptimer) > CLOCK_TICKER_SLOW_8S) {
+		state=S_SLEEP; 	//turning on interrupts to wake up again is taken care of in S_SLEEP
+	} else { 
+		sei();
+	}
+}
+
+
 /**
  * @brief Main routine of firmware and application entry point
  * @return Application return code
@@ -104,7 +114,6 @@ int main(void) {
     
 	uint8_t buzzer = 0;		//time to turn on in multiple by 10ms
 	uint8_t toggle250MS = 0;
-	uint8_t toggle10MS = 0;
 	
 	uint8_t state = S_INIT;
 	
@@ -126,8 +135,6 @@ int main(void) {
 		if (clock_getTickerFastDiff(ticker10MS) > CLOCK_TICKER_FAST_10MS) {
             ticker10MS = clock_getTickerFast();
 			
-			toggle10MS = !toggle10MS;
-			 
 			tickDebounce();
 			
 			if(buzzer!=0)
@@ -220,14 +227,7 @@ int main(void) {
 					}
 				}
 				
-				//go to sleep?
-				cli();	//for atomic check of condition
-				if (clock_getTickerSlowDiff(sleeptimer) > CLOCK_TICKER_SLOW_8S) {
-					state=S_SLEEP; 	//turning on interrupts to wake up again is taken care of in S_SLEEP
-				} else { 
-					sei();
-				}
-				
+				checkGoToSleep();
 				
 				break;
 			case S_PROGRAMMING:
@@ -259,7 +259,8 @@ int main(void) {
 			case S_NO_MORE:
 			case S_NO_PROGRAM:
 				//nothing to do any more...
-
+				
+				checkGoToSleep();
 				break;
 				
 			case S_SLEEP:
