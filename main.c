@@ -62,6 +62,7 @@
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
 #include <avr/sleep.h>
+#include <avr/power.h>
 #include "clock.h"
 #include "isp.h"
 #include "counter.h"
@@ -274,6 +275,7 @@ int main(void) {
 		//go to sleep?
 		cli();	//for atomic check of condition
 		if (clock_getTickerSlowDiff(sleeptimer) > CLOCK_TICKER_SLOW_8S) {
+			sleeptimer=clock_getTickerSlow();		//update timer to prevent immediate sleepmode after wakeup
 			state=S_SLEEP; 	//turning on interrupts to wake up again is taken care of in S_SLEEP
 			} else {
 			sei();

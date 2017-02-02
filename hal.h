@@ -27,6 +27,8 @@
 // ******************************** ATmega1284P ***********************************
 #if defined (__AVR_ATmega1284P__)
 
+// runs at 8MHz internal clock
+
 #define IO_LED_GREEN	PD4		// at Port D
 #define IO_LED_RED		PC3		// at Port C
 #define IO_SWITCH		PD3		// at Port D (INT1)
@@ -60,6 +62,10 @@
 // ************************ ATmega328 on Arduino Uno *****************************
 #elif defined (__AVR_ATmega328P__)
 
+// Arduino Uno has 16MHz Crystal -> scaled by 2 to have correct timing.
+
+//TODO: firmware works only if flashed via ISP (without bootloader) onto arduino. check that...
+
 #define IO_LED_GREEN	PC2		// Arduino Uno: A2
 #define IO_LED_RED		PC1		// Arduino Uno: A1
 #define IO_SWITCH		PD3		// Arduino Uno: D3 (INT1)
@@ -70,7 +76,7 @@
 #define hal_setLEDgreen(x)	PORTC =	(PORTC & ~(1 << IO_LED_GREEN))	| ((x) << IO_LED_GREEN)
 #define hal_setLEDred(x)	PORTC =	(PORTC & ~(1 << IO_LED_RED))	| ((x) << IO_LED_RED)
 #define hal_setBuzzer(x)	PORTC = (PORTC & ~(1 << IO_BUZZER))		| ((x) << IO_BUZZER)
-#define hal_init()			DDRC = ( (1 << IO_LED_GREEN) | (1 << IO_LED_RED) | (1 << IO_BUZZER) ); PORTD = ( (1<<IO_SWITCH) | (1<<IO_EXT_SWITCH) );	//LEDs & Buzzer: Output; Switch: Enable Pullup
+#define hal_init()			clock_prescale_set(2); DDRC = ( (1 << IO_LED_GREEN) | (1 << IO_LED_RED) | (1 << IO_BUZZER) ); PORTD = ( (1<<IO_SWITCH) | (1<<IO_EXT_SWITCH) );	//LEDs & Buzzer: Output; Switch: Enable Pullup
 #define hal_enableINT0()	EIMSK |= (1<<INT0);												//Enable INT0, fire on low level (this is the only detectable state in powerdown)
 #define hal_disableINT0()	EIMSK &= ~(1<<INT0);
 #define hal_enableINT1()	EIMSK |= (1<<INT1);												//Enable INT1, fire on low level (this is the only detectable state in powerdown)
