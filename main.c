@@ -24,9 +24,9 @@
  *   - Added EEPROM programming
  * - v1.4 (2017-01-29)
  *   - Improvements for Battery-Powered Devices
- *   - Buzzer on PBxxx (TODO)
+ *   - Added Buzzer
  *   - Fix: Made slowticker volatile
- *   - 
+ *   - Added Arduino Uno support
  *
  */
 
@@ -36,8 +36,8 @@
  * @brief This file contains the main routine with application entry point for
  *        the ISPnub firmware project
  *
- * @author Thomas Fischl
- * @copyright (c) 2013-2014 Thomas Fischl
+ * @author Thomas Fischl, Michael G.
+ * @copyright (c) 2013-2014, 2017 Thomas Fischl, Michael G.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -62,7 +62,6 @@
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
 #include <avr/sleep.h>
-#include <util/delay.h>
 #include "clock.h"
 #include "isp.h"
 #include "counter.h"
@@ -83,15 +82,6 @@
 
 
 
-void checkGoToSleep(void) {
-	//go to sleep?
-	cli();	//for atomic check of condition
-	if (clock_getTickerSlowDiff(sleeptimer) > CLOCK_TICKER_SLOW_8S) {
-		state=S_SLEEP; 	//turning on interrupts to wake up again is taken care of in S_SLEEP
-	} else { 
-		sei();
-	}
-}
 
 
 /**
@@ -227,8 +217,6 @@ int main(void) {
 					}
 				}
 				
-				checkGoToSleep();
-				
 				break;
 			case S_PROGRAMMING:
 				
@@ -258,9 +246,8 @@ int main(void) {
 				break;
 			case S_NO_MORE:
 			case S_NO_PROGRAM:
-				//nothing to do any more...
+				//nothing to do any more (except from going to sleep)...
 				
-				checkGoToSleep();
 				break;
 				
 			case S_SLEEP:
@@ -282,6 +269,16 @@ int main(void) {
 				
 				break;
 		}
+		
+		
+		//go to sleep?
+		cli();	//for atomic check of condition
+		if (clock_getTickerSlowDiff(sleeptimer) > CLOCK_TICKER_SLOW_8S) {
+			state=S_SLEEP; 	//turning on interrupts to wake up again is taken care of in S_SLEEP
+			} else {
+			sei();
+		}
+
 		
     }
 
