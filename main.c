@@ -70,8 +70,6 @@
 #define S_INIT 0
 #define S_IDLE 10
 #define S_PROGRAMMING 20
-#define S_PROGRAMMING_SUCCESS 21
-#define S_PROGRAMMING_FAILED 22
 #define S_SLEEP 30
 #define S_WAKEUP 31
 #define S_NO_MORE 40	//counter empty
@@ -123,7 +121,7 @@ int main(void) {
 			
 			tickDebounce();
 			
-			if(buzzer!=0)
+			if(buzzer>0)
 				buzzer--;
 		}
 		
@@ -155,6 +153,7 @@ int main(void) {
 					hal_setLEDgreen(0);
 					hal_setLEDyellow(0);
 					hal_setLEDred(toggle250MS);
+					
 				}
 				break;
 			
@@ -164,12 +163,7 @@ int main(void) {
 				hal_setLEDred(0);
 				
 				break;
-			case S_PROGRAMMING_SUCCESS:
-
-				break;
-			case S_PROGRAMMING_FAILED:
-				
-				break;
+			
 			case S_NO_MORE:
 				hal_setLEDgreen(0);
 				hal_setLEDyellow(0);
@@ -178,8 +172,8 @@ int main(void) {
 				break;
 				
 			case S_NO_PROGRAM:
-				hal_setLEDgreen(0);
-				hal_setLEDyellow(!toggle250MS);
+				hal_setLEDgreen(!toggle250MS);
+				hal_setLEDyellow(0);
 				hal_setLEDred(toggle250MS);
 				
 				break;
@@ -189,6 +183,7 @@ int main(void) {
 				hal_setLEDyellow(0);
 				hal_setLEDred(0);
 				hal_setBuzzer(0);
+				
 				break;
 		}
 		
@@ -217,6 +212,7 @@ int main(void) {
 					if(counter_read()>0) {
 						state=S_PROGRAMMING;
 					} else {
+						buzzer=200;
 						state=S_NO_MORE;
 					}
 				}
@@ -226,28 +222,19 @@ int main(void) {
 				
 				success = script_run();
 				
-				if(success==1) {
-					state=S_PROGRAMMING_SUCCESS;
-				} else if(success==0) {
-					state=S_PROGRAMMING_FAILED;
-				} else {
+				if(success==1) {		// programming OK
+					buzzer=10;
+					state=S_IDLE;
+				} else if(success==0) {	// programming failed (connection, wrong avr, ...)
+					buzzer=50;
+					state=S_IDLE;
+				} else {				// programming failed due to missing program
+					buzzer=100;
 					state=S_NO_PROGRAM;
 				}
-				break;
-			case S_PROGRAMMING_SUCCESS:
-				
-				buzzer=10;
-				
-				state=S_IDLE;
 				
 				break;
-			case S_PROGRAMMING_FAILED:
-				
-				buzzer=80;
-				
-				state=S_IDLE;
-				
-				break;
+
 			case S_NO_MORE:
 			case S_NO_PROGRAM:
 				//nothing to do any more (except from going to sleep)...

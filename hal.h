@@ -37,7 +37,7 @@
 #define IO_EXT_SWITCH	PD2		// at Port D (INT0)
 #define IO_SWITCH_PIN	PIND	// all switches have to be on same port to be debounced
 
-#define hal_setLEDgreen(x)	PORTD =	(PORTD & ~(1 << IO_LED_GREEN))	| ((x) << IO_LED_GREEN)										// inverses logic: setLEDx(1) turns it on
+#define hal_setLEDgreen(x)	PORTD =	(PORTD & ~(1 << IO_LED_GREEN))	| ((x) << IO_LED_GREEN)
 #define hal_setLEDyellow(x)	PORTD =	(PORTD & ~(1 << IO_LED_YELLOW))	| ((x) << IO_LED_YELLOW)
 #define hal_setLEDred(x)	PORTC =	(PORTC & ~(1 << IO_LED_RED))	| ((x) << IO_LED_RED)
 #define hal_setBuzzer(x)	PORTA = (PORTA & ~(1 << IO_BUZZER))		| ((x) << IO_BUZZER)
