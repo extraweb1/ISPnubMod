@@ -212,7 +212,7 @@ int main(void) {
 					if(counter_read()>0) {
 						state=S_PROGRAMMING;
 					} else {
-						buzzer=200;
+						buzzer=100;
 						state=S_NO_MORE;
 					}
 				}
@@ -223,13 +223,13 @@ int main(void) {
 				success = script_run();
 				
 				if(success==1) {		// programming OK
-					buzzer=10;
+					buzzer=3;
 					state=S_IDLE;
 				} else if(success==0) {	// programming failed (connection, wrong avr, ...)
-					buzzer=50;
+					buzzer=40;
 					state=S_IDLE;
 				} else {				// programming failed due to missing program
-					buzzer=100;
+					buzzer=60;
 					state=S_NO_PROGRAM;
 				}
 				
