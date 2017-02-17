@@ -62,7 +62,7 @@
 #elif defined (__AVR_ATmega328P__) || defined (__AVR_ATmega328__)
 
 // Arduino Uno has 16MHz Crystal -> scaled by 2 to have correct timing.
-// firmware works only if flashed via ISP (without bootloader) onto arduino. check that...
+// Attention: Firmware works only if flashed via ISP (without bootloader) onto Arduino.
 
 #define IO_LED_GREEN	PC3		// Arduino Uno: A3
 #define IO_LED_YELLOW	PC2		// Arduino Uno: A2

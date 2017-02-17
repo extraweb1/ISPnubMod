@@ -233,6 +233,9 @@ int main(void) {
 					state=S_NO_PROGRAM;
 				}
 				
+				//update sleeptimer to prevent falling asleep after a long-lasting programming task
+				sleeptimer=clock_getTickerSlow();
+				
 				break;
 
 			case S_NO_MORE:
@@ -255,6 +258,10 @@ int main(void) {
 				//execution is resumed here after processing interrupt
 				
 				sleep_disable();
+				
+				//update timer to prevent direct entry of sleepmode after wakeup 
+				sleeptimer=clock_getTickerSlow();
+				
 				state=S_WAKEUP;
 				
 				
@@ -265,10 +272,9 @@ int main(void) {
 		//go to sleep?
 		cli();	//for atomic check of condition
 		if (clock_getTickerSlowDiff(sleeptimer) > CLOCK_TICKER_SLOW_8S) {
-			sleeptimer=clock_getTickerSlow();		//update timer to prevent immediate sleepmode after wakeup
-			state=S_SLEEP; 	//turning on interrupts to wake up again is taken care of in S_SLEEP
-			} else {
-			sei();
+			state=S_SLEEP; 	//go to sleep
+		} else {
+			sei();			//stay awake
 		}
 
 		
