@@ -12,21 +12,17 @@
  * merges the firmware hex data with programming instructions from scripts.
  * 
  * Environment:
- * - Target: ATmega1284P
- * - Compiler: avr-gcc (GCC) 4.7.2
+ * - Target: ATmega1284P + X
+ * - Compiler: avr-gcc (GCC) 4.9.2
  * 
  * @section history Change History
- * - v1.0 (2013-06-14)
- *   - Initial release
- * - v1.1 (2013-10-06)
- *   - Code cleanup and documentation
- * - v1.2 (2014-04-08)
- *   - Added EEPROM programming
- * - v1.4 (2017-01-29)
+ * - ISPnubMod v1.0, based on ISPnub 1.3 (2017-02-03)
  *   - Improvements for Battery-Powered Devices
  *   - Added Buzzer
  *   - Fix: Made slowticker volatile
- *   - Added Arduino Uno support
+ *   - Added HAL for other TQFP44-AVRs
+ *   - Added Yellow LED (red is only for errors)
+ *   - 
  *
  */
 
@@ -74,8 +70,6 @@
 #define S_INIT 0
 #define S_IDLE 10
 #define S_PROGRAMMING 20
-#define S_PROGRAMMING_SUCCESS 21
-#define S_PROGRAMMING_FAILED 22
 #define S_SLEEP 30
 #define S_WAKEUP 31
 #define S_NO_MORE 40	//counter empty
@@ -92,7 +86,6 @@
 int main(void) {
 
     hal_init();
-
     clock_init();
 	set_sleep_mode(SLEEP_MODE_PWR_DOWN);
 	
@@ -128,7 +121,7 @@ int main(void) {
 			
 			tickDebounce();
 			
-			if(buzzer!=0)
+			if(buzzer>0)
 				buzzer--;
 		}
 		
@@ -143,6 +136,7 @@ int main(void) {
 			case S_INIT:
 			case S_WAKEUP:
 				hal_setLEDgreen(1);
+				hal_setLEDyellow(0);
 				hal_setLEDred(0);
 				hal_setBuzzer(0);
 				
@@ -153,39 +147,43 @@ int main(void) {
 			case S_IDLE:
 				if(success==1) {
 					hal_setLEDgreen(1);
+					hal_setLEDyellow(0);
 					hal_setLEDred(0);
 				} else {
 					hal_setLEDgreen(0);
+					hal_setLEDyellow(0);
 					hal_setLEDred(toggle250MS);
+					
 				}
 				break;
 			
 			case S_PROGRAMMING:
-				hal_setLEDgreen(1);
-				hal_setLEDred(1);
+				hal_setLEDgreen(0);
+				hal_setLEDyellow(1);
+				hal_setLEDred(0);
 				
 				break;
-			case S_PROGRAMMING_SUCCESS:
-
-				break;
-			case S_PROGRAMMING_FAILED:
-				
-				break;
+			
 			case S_NO_MORE:
-				hal_setLEDgreen(toggle250MS);
+				hal_setLEDgreen(0);
+				hal_setLEDyellow(0);
 				hal_setLEDred(toggle250MS);
 				
 				break;
 				
 			case S_NO_PROGRAM:
 				hal_setLEDgreen(!toggle250MS);
+				hal_setLEDyellow(0);
 				hal_setLEDred(toggle250MS);
 				
 				break;
 			case S_SLEEP:
+				//disable all signals for max. power-saving
 				hal_setLEDgreen(0);
+				hal_setLEDyellow(0);
 				hal_setLEDred(0);
 				hal_setBuzzer(0);
+				
 				break;
 		}
 		
@@ -214,6 +212,7 @@ int main(void) {
 					if(counter_read()>0) {
 						state=S_PROGRAMMING;
 					} else {
+						buzzer=100;
 						state=S_NO_MORE;
 					}
 				}
@@ -223,28 +222,19 @@ int main(void) {
 				
 				success = script_run();
 				
-				if(success==1) {
-					state=S_PROGRAMMING_SUCCESS;
-				} else if(success==0) {
-					state=S_PROGRAMMING_FAILED;
-				} else {
+				if(success==1) {		// programming OK
+					buzzer=3;
+					state=S_IDLE;
+				} else if(success==0) {	// programming failed (connection, wrong avr, ...)
+					buzzer=40;
+					state=S_IDLE;
+				} else {				// programming failed due to missing program
+					buzzer=60;
 					state=S_NO_PROGRAM;
 				}
-				break;
-			case S_PROGRAMMING_SUCCESS:
-				
-				buzzer=10;
-				
-				state=S_IDLE;
 				
 				break;
-			case S_PROGRAMMING_FAILED:
-				
-				buzzer=50;
-				
-				state=S_IDLE;
-				
-				break;
+
 			case S_NO_MORE:
 			case S_NO_PROGRAM:
 				//nothing to do any more (except from going to sleep)...

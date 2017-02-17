@@ -12,3 +12,4 @@ instructions and executes it on the connected target controller.
 The firmware hex file is packed into the JAR file of ISPnubCreator which
 merges the firmware hex data with programming instructions from scripts.
  
+![modded board](https://cdn.rawgit.com/mgroel/ISPnub/master/board/ispnub_mod_pics.svg) <a href="https://oshpark.com/shared_projects/0ZfQJilI"><img src="https://oshpark.com/assets/badge-5b7ec47045b78aef6eb9d83b3bac6b1920de805e9a0c227658eac6e19a045b9c.png" alt="Order from OSH Park"></img></a>
