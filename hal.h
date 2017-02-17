@@ -24,6 +24,7 @@
 #ifndef _HAL_
 #define _HAL_
 
+
 // ******************************** ATmega1284P ***********************************
 #if defined (__AVR_ATmega1284P__)
 
@@ -63,8 +64,7 @@
 #elif defined (__AVR_ATmega328P__)
 
 // Arduino Uno has 16MHz Crystal -> scaled by 2 to have correct timing.
-
-//TODO: firmware works only if flashed via ISP (without bootloader) onto arduino. check that...
+// Attention: Firmware works only if flashed via ISP (without bootloader) onto Arduino.
 
 #define IO_LED_GREEN	PC2		// Arduino Uno: A2
 #define IO_LED_RED		PC1		// Arduino Uno: A1
