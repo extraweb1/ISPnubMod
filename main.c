@@ -50,6 +50,7 @@
  * 
  */
 
+#include "main.h"
 #include "hal.h"
 #include <inttypes.h>
 #include <stdio.h>
@@ -64,19 +65,6 @@
 #include "counter.h"
 #include "script.h"
 #include "debounce.h"
-#include <stdint.h>
-
-//states
-#define S_INIT 0
-#define S_IDLE 10
-#define S_PROGRAMMING 20
-#define S_SLEEP 30
-#define S_WAKEUP 31
-#define S_NO_MORE 40	//counter empty
-#define S_NO_PROGRAM 41
-
-
-
 
 
 /**
