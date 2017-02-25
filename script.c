@@ -34,8 +34,48 @@
 /**
  * @brief Pointer to script data in flash memory
  */
-unsigned char scriptdata[] SCRIPT_SECTION = {SCRIPT_CMD_NOPROGRAM}; // dummy (is overwritten by hex creator)
-
+#ifdef DEBUG
+	#warning DEBUG-MODE Choose a testdummy inline-script for debugging purposes
+	
+	//test decounter, take a look at eeprom afterwards
+	/*unsigned char scriptdata[] SCRIPT_SECTION = {
+		SCRIPT_CMD_DECCOUNTER,0,3,		// two bytes, since its counting a 16bit var
+		SCRIPT_CMD_WAIT,20,
+		SCRIPT_CMD_END
+	};*/
+	
+	//simulate long-running programming task (2*255*10ms=5,1s
+	/*unsigned char scriptdata[] SCRIPT_SECTION = {
+		SCRIPT_CMD_WAIT,255,
+		SCRIPT_CMD_WAIT,255,
+		SCRIPT_CMD_END
+	};*/
+	
+	//simulate usual behaviour
+	//unsigned char scriptdata[] SCRIPT_SECTION = {SCRIPT_CMD_NOPROGRAM};
+	
+	//check for tiny13A signature
+	unsigned char scriptdata[] SCRIPT_SECTION = { 
+		SCRIPT_CMD_CONNECT, 7,									// sckopt=7 means SPI@8MHz/64->125kHz, see connect-routine
+		SCRIPT_CMD_SPI_VERIFY, 0x30, 0x00, 0x00, 0x00, 0x1E,    // check signature byte 0x00 (0x1E = manufactured by Atmel)
+		SCRIPT_CMD_SPI_VERIFY, 0x30, 0x00, 0x01, 0x00, 0x90,    // check signature byte 0x01 (0x90 = 1KB Flash memory)
+		SCRIPT_CMD_SPI_VERIFY, 0x30, 0x00, 0x02, 0x00, 0x07,	// check signature byte 0x02 (0x07 = attiny13(a) device)
+		SCRIPT_CMD_DISCONNECT,
+		SCRIPT_CMD_END
+	};
+	
+	//check for tiny45 signature
+	/*unsigned char scriptdata[] SCRIPT_SECTION = { 
+		SCRIPT_CMD_CONNECT, 7,									// sckopt=7 means SPI@8MHz/64->125kHz, see connect-routine
+		SCRIPT_CMD_SPI_VERIFY, 0x30, 0x00, 0x00, 0x00, 0x1E,    // check signature byte 0x00 (0x1E = manufactured by Atmel)
+		SCRIPT_CMD_SPI_VERIFY, 0x30, 0x00, 0x01, 0x00, 0x92,    // check signature byte 0x01 (0x92 = 4KB Flash memory)
+		SCRIPT_CMD_SPI_VERIFY, 0x30, 0x00, 0x02, 0x00, 0x06,	// check signature byte 0x06 (0x07 = attiny45 device)
+		SCRIPT_CMD_DISCONNECT,
+		SCRIPT_CMD_END
+	};*/
+#else
+	unsigned char scriptdata[] SCRIPT_SECTION = {SCRIPT_CMD_NOPROGRAM}; // dummy (is overwritten by hex creator)
+#endif
 /**
  * @brief Execute script stored in flash memory
  * @retval 2 No Program (use ISPnubCreator to generate hex to flash targets)

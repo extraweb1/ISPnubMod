@@ -147,13 +147,18 @@ int main(void) {
 			
 			case S_PROGRAMMING:
 				hal_setLEDgreen(0);
-				hal_setLEDyellow(1);
-				hal_setLEDred(0);
+				#if COMPATIBILITY_MODE_ISPNUB_ORIGINAL == 1 || DONT_USE_YELLOW_LED == 1
+					hal_setLEDyellow(0);
+					hal_setLEDred(1);
+				#else
+					hal_setLEDyellow(1);
+					hal_setLEDred(0);
+				#endif
 				
 				break;
 			
 			case S_NO_MORE:
-				hal_setLEDgreen(0);
+				hal_setLEDgreen(toggle250MS);
 				hal_setLEDyellow(0);
 				hal_setLEDred(toggle250MS);
 				
@@ -200,7 +205,7 @@ int main(void) {
 					if(counter_read()>0) {
 						state=S_PROGRAMMING;
 					} else {
-						buzzer=100;
+						buzzer=60;
 						state=S_NO_MORE;
 					}
 				}
@@ -214,7 +219,7 @@ int main(void) {
 					buzzer=3;
 					state=S_IDLE;
 				} else if(success==0) {	// programming failed (connection, wrong avr, ...)
-					buzzer=40;
+					buzzer=30;
 					state=S_IDLE;
 				} else {				// programming failed due to missing program
 					buzzer=60;

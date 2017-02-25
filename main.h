@@ -13,9 +13,8 @@
 
 // mode for compatibility with original ISPnub-Board
 // functionality is decreased
-#define COMPATIBILITY_MODE_ISPNUB_ORIGINAL 1
-
-#define USE_YELLOW_LED 1
+#define COMPATIBILITY_MODE_ISPNUB_ORIGINAL 0
+#define DONT_USE_YELLOW_LED 0
 
 
 //states
