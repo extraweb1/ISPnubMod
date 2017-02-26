@@ -12,17 +12,17 @@
  * merges the firmware hex data with programming instructions from scripts.
  * 
  * Environment:
- * - Target: ATmega1284P + X
+ * - Target: ATmega1284P + ATmega16, ATmega32, ATmega644 (all TQFP-44)
+ *           for testing ATmega328P@ext. 16MHZ Oscillator is supported but it has to be flashed via ISP (not bootloader) to work
  * - Compiler: avr-gcc (GCC) 4.9.2
  * 
  * @section history Change History
- * - ISPnubMod v1.0, based on ISPnub 1.3 (2017-02-03)
+ * - ISPnubMod v1.0, based on ISPnub 1.3 (2017-02-26)
  *   - Improvements for Battery-Powered Devices
  *   - Added Buzzer
  *   - Fix: Made slowticker volatile
  *   - Added HAL for other TQFP44-AVRs
  *   - Added Yellow LED (red is only for errors)
- *   - 
  *
  */
 
@@ -244,7 +244,9 @@ int main(void) {
 				hal_enableINT1();
 				
 				sleep_enable();
+#if HAS_DYNAMIC_BOD_CONTROL == 1
 				sleep_bod_disable();
+#endif
 				sei();
 				sleep_cpu();
 				
