@@ -1,5 +1,5 @@
-ISPnubMod
-=========
+# ISPnubMod
+
 Firmware for stand-alone AVR programmer module.
 
 ISPnub is a stand-alone AVR programming module. The programming instructions
@@ -11,8 +11,8 @@ instructions and executes it on the connected target controller.
 The firmware hex file is packed into the JAR file of ISPnubCreator which
 merges the firmware hex data with programming instructions from scripts.
 
-Hardware / Boards
-========
+## Hardware / Boards
+
 There are two dedicated boards to build the ISPnub. The original board is very small, further information you can get at the inventor of the <a href="http://www.fischl.de/ispnub/">original ISPnub</a>. The modded board <a href="https://oshpark.com/shared_projects/0ZfQJilI">can be ordered e.g. from OSHpark</a> and has some extra features on it:
   * Supported AVRs: ATmega1284, ATmega644, ATmega328@16MHz (Arduino Uno), ATmega32/16 (still untested)
   * 2 Power-Connectors
@@ -29,12 +29,13 @@ If you would like to test the system on Arduino Uno first here is a connection d
 ![try on arduino](https://cdn.rawgit.com/mgroel/ISPnub/master/arduino-testcircuit/arduino_isp_ispnub_Steckplatine.svg)
 
 
-Set up the Software / Usage
-===========================
+## Set up the Software / Usage
+
 Detailed explanation about function and usage of the ISPnub are to be found at <a href="http://www.fischl.de/ispnub/">fischl.de</a>
 
 In short:
-1. Write a programming script (test.ispnub):
+
+### 1. Write a programming script (test.ispnub):
 ```
 CONNECT 2000000                           ; connect with SCK = 2 MHz 
 SPIVERIFY 0x30, 0x00, 0x00, 0x00, 0x1E    ; check signature byte 0x00 (0x1E = manufactured by Atmel)
@@ -47,24 +48,24 @@ DISCONNECT                                ; disconnect SPI
 DECCOUNTER 10                             ; allow 10 programming cycles
 END
 ```
-2. Build ISPnub firmware:
+### 2. Build ISPnub firmware:
 Take the java tool ![ISPnubModCreator](https://github.com/mgroel/ISPnubCreator/releases) to build the firmware to be flashed to the ISPnub/Arduino.
 Build the firmware like this for Arduino:
 ```
 java -jar ISPnubCreator.jar test.ispnub atmega328_16MHz ispnub.hex
 ```
 
-To use the modded firmware on the original ISPnub board execute:
+To use the modded firmware in compatibility-mode on the original ISPnub board execute:
 ```
 java -jar ISPnubCreator.jar test.ispnub atmega1284_compat ispnub.hex
 ```
 
-Or choose one of the other supported AVR:
+Or choose one of the other supported AVR in combination with the modded board:
 ```
 java -jar ISPnubCreator.jar test.ispnub [atmega1284|atmega1284_compat|atmega328_16MHz|atmega16|atmega32|atmega644] ispnub.hex
 ```
 
-3. Flash the ISPnub/Arduino:
+### 3. Flash the ISPnub/Arduino:
 Now the generated "ispnub.hex" can be flashed with your favorite programmer into the arduino. Take care for setting the fuses right. A working suggestion is given on the commandline by the java tool after building the firmware in step 2.
 
-4. Flash targets by hitting the switch on the ISPnub
+### 4. Flash targets by hitting the switch on the ISPnub
