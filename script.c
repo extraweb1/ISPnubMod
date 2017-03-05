@@ -30,6 +30,7 @@
 #include "isp.h"
 #include "counter.h"
 #include "script.h"
+#include "testing.h"
 
 /**
  * @brief Pointer to script data in flash memory
@@ -56,11 +57,16 @@
 	
 	//check for tiny13A signature
 	unsigned char scriptdata[] SCRIPT_SECTION = { 
-		SCRIPT_CMD_CONNECT, 7,									// sckopt=7 means SPI@8MHz/64->125kHz, see connect-routine
+		/*SCRIPT_CMD_CONNECT, 7,									// sckopt=7 means SPI@8MHz/64->125kHz, see connect-routine
 		SCRIPT_CMD_SPI_VERIFY, 0x30, 0x00, 0x00, 0x00, 0x1E,    // check signature byte 0x00 (0x1E = manufactured by Atmel)
 		SCRIPT_CMD_SPI_VERIFY, 0x30, 0x00, 0x01, 0x00, 0x90,    // check signature byte 0x01 (0x90 = 1KB Flash memory)
 		SCRIPT_CMD_SPI_VERIFY, 0x30, 0x00, 0x02, 0x00, 0x07,	// check signature byte 0x02 (0x07 = attiny13(a) device)
-		SCRIPT_CMD_DISCONNECT,
+		SCRIPT_CMD_DISCONNECT,*/
+		//SCRIPT_CMD_WAIT,100,
+		SCRIPT_CMD_SETIO,      0x05, 0, 1, 0,	//PORTB: 0x05 PORTC: 0x08
+		SCRIPT_CMD_WAIT,200,
+		SCRIPT_CMD_SETIO,      0x05, 0, 0, 0,
+		//SCRIPT_CMD_CHECKIO,    0x05, 0, 0,		//PORTB: 0x05
 		SCRIPT_CMD_END
 	};
 	
@@ -186,7 +192,35 @@ uint8_t script_run() {
 			case SCRIPT_CMD_END:
 				return 1;
 				break;
+			
+			//testing-commands following
+			case SCRIPT_CMD_CHECKIO:
+			{
+				uint8_t port = flash_readbyte(scriptdata_p++);
+				uint8_t pinNo = flash_readbyte(scriptdata_p++);
+				uint8_t reference_state = flash_readbyte(scriptdata_p++);
+				
+				success = testing_checkIO(port, pinNo, reference_state);
+				
+			}
+				break;
 
+			
+			case SCRIPT_CMD_SETIO:
+			{
+				uint8_t port = flash_readbyte(scriptdata_p++);
+				uint8_t pinNo = flash_readbyte(scriptdata_p++);
+				uint8_t InputOutput = flash_readbyte(scriptdata_p++);
+				uint8_t state = flash_readbyte(scriptdata_p++);
+				testing_setIO(port,pinNo,InputOutput,state);
+				
+				success=1;
+				
+			}
+				break;
+
+			
+			
         }
 		
 		

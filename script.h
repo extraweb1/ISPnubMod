@@ -40,6 +40,10 @@
 #define SCRIPT_CMD_END          0xff    ///< Command: End of script
 #define SCRIPT_CMD_NOPROGRAM    0xf0    ///< Dummy-Command: Used to determine whether ISPnub Creator was used to replace dummy by program
 
+//Commands used for testing the freshly programmed device
+#define SCRIPT_CMD_CHECKIO      0xa0    ///< Command: Check for specified state at defined PIN
+#define SCRIPT_CMD_SETIO        0xa1    ///< Command: Set PIN to a defined state
+
 uint8_t script_run();
 
 #endif

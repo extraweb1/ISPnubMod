@@ -26,11 +26,14 @@
 #define TESTING_DELAY_SHORT CLOCK_TICKER_FAST_5MS
 #define TESTING_DELAY_LONG  CLOCK_TICKER_FAST_10MS
 
+#define getPIN(x) (*(&x - 2)) // Address Of Data Direction Register Of Port x
+#define getDDR(x) (*(&x - 1)) // Address Of Input Register Of Port x
+#define getPORT(x) (x)
 
-uint8_t testing_checkIO(uint8_t ddr, uint8_t port, uint8_t pin, uint8_t reference_state);
-void    testing_setIO  (uint8_t ddr, uint8_t port, uint8_t pin, uint8_t state);
+uint8_t testing_checkIO(uint8_t r_port, uint8_t pinNo, uint8_t reference_state);
+void    testing_setIO  (uint8_t r_port, uint8_t pinNo, uint8_t InputOutput, uint8_t state);
 //uint8_t testing_checkADC(uint8_t adc_channel, uint16_t lowerADCvalBound, uint16_t upperADCvalBound);
-uint8_t testing_checkFreq(uint8_t port, uint8_t pin, uint16_t lowerFreqBound, uint16_t upperFreqBound);
+//uint8_t testing_checkFreq(uint8_t ddr, uint8_t port, uint8_t pin, uint8_t pinNo, uint16_t lowerFreqBound, uint16_t upperFreqBound);
 
 
 #endif
